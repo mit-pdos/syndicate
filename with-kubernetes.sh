@@ -47,8 +47,7 @@ FROM golang:1.6
 MAINTAINER Jon Gjengset <jon@thesquareplanet.com>
 
 ADD source.tgz /go
-ENV GOPATH /go
-RUN go install $user/gfs/...
+RUN cd /go/src && env GOPATH=/go go install $user/gfs/... && cd / && rm -rf /go/src && rm -rf /go/pkg
 EOF
 docker build -t "$image" .
 

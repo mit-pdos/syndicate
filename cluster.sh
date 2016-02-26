@@ -112,9 +112,7 @@ FROM golang:1.6
 MAINTAINER Jon Gjengset <jon@thesquareplanet.com>
 
 ADD source.tgz /go
-ENV GOPATH /go
-WORKDIR /go/src
-RUN go install 6824/gfs/...
+RUN cd /go/src && env GOPATH=/go go install 6824/gfs/... && cd / && rm -rf /go/src && rm -rf /go/pkg
 EOF
 
 image="client-image"
