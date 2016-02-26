@@ -159,6 +159,3 @@ echo " - kubectl exec docker-registry cat /certs/domain.crt > registry.crt"
 echo " * ssh node sudo mkdir -p $certd"
 echo " * ssh node sudo tee $certd/ca.crt < registry.crt"
 echo " * echo '$ip docker-registry' | ssh node sudo tee -a /etc/hosts"
-echo ""
-echo -n "Then press <Enter> to continue..."
-read -r
