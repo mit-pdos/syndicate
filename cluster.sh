@@ -115,6 +115,17 @@ ADD source.tgz /go
 RUN cd /go/src && env GOPATH=/go go install 6824/gfs/... && cd / && rm -rf /go/src && rm -rf /go/pkg
 EOF
 
+#rapi_port=$("$kubectl" get svc/docker-registry -o=go-template --template="{{index .spec.ports 1 \"nodePort\"}}")
+#rapi="docker-registry:$rapi_port"
+#image="client-image"
+#tar cz -C "$workdir" . | curl \
+#    --data-binary @- \
+#    --header 'Content-Type: application/x-tar' \
+#    --no-buffer \
+#    --capath "$certd" \
+#    --cacert "$certd/ca.crt" \
+#    "https://$rapi/build?t=$image"
+
 image="client-image"
 docker build -t "$image" .
 
