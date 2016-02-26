@@ -100,6 +100,13 @@ sudo mkdir -p "$certd"
 # }}}
 
 ## 3. build and upload client image {{{
+
+# First, send golang 1.6 to private registry
+# This doesn't help because of https://github.com/docker/distribution/issues/1495
+#docker pull "golang:1.6"
+#docker tag "golang:1.6" "$registry/golang:1.6"
+#docker push "$registry/golang:1.6"
+
 realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
@@ -108,6 +115,7 @@ cp -H "$(realpath "$client_tarball")" "$workdir/source.tgz"
 pushd "$workdir" || exit 1
 
 cat > Dockerfile <<EOF
+#FROM $registry/golang:1.6
 FROM golang:1.6
 MAINTAINER Jon Gjengset <jon@thesquareplanet.com>
 
