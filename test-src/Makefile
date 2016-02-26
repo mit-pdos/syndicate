@@ -19,7 +19,7 @@ client.tgz: src/6824/gfs/client/main.go src/vendor/k8s.io/kubernetes/.available 
 student.tgz: src/student/gfs/master/main.go src/student/gfs/worker/main.go
 	rm -f $@
 	tar czf $@ \
-		--exclude ./src/6824 \
+		--exclude ./src/6824/gfs/client \
 		--exclude ./src/vendor \
 		--exclude ./Makefile \
 		--exclude ./bin \
