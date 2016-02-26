@@ -38,12 +38,12 @@ realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 workdir=$(mktemp -d "docker-build-${user}.XXXXXXXXXX")
-cp "$(realpath "$tarball")" "$workdir/source.tgz"
+cp -H "$(realpath "$tarball")" "$workdir/source.tgz"
 pushd "$workdir" || exit 1
 
 image="$user-image"
 cat > Dockerfile <<EOF
-FROM golang:1.5
+FROM golang:1.6
 MAINTAINER Jon Gjengset <jon@thesquareplanet.com>
 
 ADD source.tgz /go
@@ -157,7 +157,7 @@ spec:
       containers:
       - name: $user-client
         image: $client_image
-        command: ["/go/bin/client",  "$workers"]
+        command: ["/go/bin/client", "$user", "$workers"]
       restartPolicy: Never
 EOF
 "$kubectl" create -f "$recipes/client_job.yaml"

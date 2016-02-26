@@ -104,15 +104,16 @@ realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 workdir=$(mktemp -d "docker-build-client.XXXXXXXXXX")
-cp "$(realpath "$client_tarball")" "$workdir/source.tgz"
+cp -H "$(realpath "$client_tarball")" "$workdir/source.tgz"
 pushd "$workdir" || exit 1
 
 cat > Dockerfile <<EOF
-FROM golang:1.5
+FROM golang:1.6
 MAINTAINER Jon Gjengset <jon@thesquareplanet.com>
 
 ADD source.tgz /go
 ENV GOPATH /go
+WORKDIR /go/src
 RUN go install 6824/gfs/...
 EOF
 

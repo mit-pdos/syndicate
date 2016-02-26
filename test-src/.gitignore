@@ -1,0 +1,6 @@
+bin/
+build/
+pkg/
+src/vendor/
+*.tar.gz
+*.tgz
