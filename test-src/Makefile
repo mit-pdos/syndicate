@@ -9,7 +9,8 @@ client.tgz: src/6824/gfs/client/main.go src/vendor/k8s.io/kubernetes/.available 
 	rm -f $@
 	cd src && env GOPATH=$(ROOT_DIR) go get 6824/gfs/...
 	tar czf $@ \
-		--exclude ./src/student \
+		--exclude './src/*/gfs/master' \
+		--exclude './src/*/gfs/worker' \
 		--exclude ./Makefile \
 		--exclude ./bin \
 		--exclude ./pkg \
@@ -18,9 +19,9 @@ client.tgz: src/6824/gfs/client/main.go src/vendor/k8s.io/kubernetes/.available 
 		--exclude './*.tar.gz' \
 		.
 
-student.tgz: src/student/gfs/master/main.go src/student/gfs/worker/main.go
+%.tgz: src/%/gfs/master/main.go src/%/gfs/worker/main.go
 	rm -f $@
-	cd src && env GOPATH=$(ROOT_DIR) go get student/gfs/...
+	cd src && env GOPATH=$(ROOT_DIR) go get $*/gfs/...
 	tar czf $@ \
 		--exclude ./src/6824/gfs/client \
 		--exclude ./src/vendor \
