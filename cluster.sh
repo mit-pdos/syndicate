@@ -1,13 +1,20 @@
 #!/bin/bash
 
+# shellcheck source=common.sh
+. "$(dirname "$0")/common.sh"
+
 client_tarball="$1"
 if [ ! -e "$client_tarball" ]; then
-	echo "ERROR: file '$client_tarball' does not exist"
+	err "file '$client_tarball' does not exist"
 	exit 1
 fi
 
+sec "Provisioning kuberenetes cluster"
+
 kubectl="kubectl"
 kubectl=~/"dev/others/kubernetes/cluster/kubectl.sh"
+
+msg "Using kubectl: $kubectl"
 
 # for cluster:
 #  - ensure that maxkubelets=1
@@ -19,6 +26,7 @@ kubectl=~/"dev/others/kubernetes/cluster/kubectl.sh"
 #  - ensure docker registry has client image
 
 ## 1. provision EC2 machines {{{
+msg "Spawn EC2 machines"
 #export KUBERNETES_PROVIDER=aws
 #export KUBE_AWS_ZONE=us-east-1
 #export NUM_MINIONS=2
@@ -28,6 +36,7 @@ kubectl=~/"dev/others/kubernetes/cluster/kubectl.sh"
 # }}}
 
 ## 2. launch a private docker registry for student images {{{
+msg "Start private docker registry"
 "$kubectl" create -f - <<EOF
 kind: Pod
 apiVersion: v1
@@ -74,19 +83,23 @@ spec:
 EOF
 
 # wait for service to start
+msg2 "Wait for registry to start"
 while /bin/true; do
 	state=$("$kubectl" get po/docker-registry -o=go-template --template='{{index . "status" "phase"}}')
 	if [[ "$state" == "Running" ]]; then
 		break
 	fi
 	if [[ "$state" != "Pending" ]]; then
-		echo "po in unexpected state '$state'"
+		err2 "Registry in unexpected state '$state'"
 		exit 1
 	fi
 done
 
 ip=$("$kubectl" get po/docker-registry -o=go-template --template='{{index . "status" "hostIP"}}')
 port=$("$kubectl" get svc/docker-registry -o=go-template --template="{{index .spec.ports 0 \"nodePort\"}}")
+msg2 "Registry ready at $ip:$port"
+
+msg2 "Inject registry name 'docker-registry' in /etc/hosts"
 if ! grep docker-registry /etc/hosts; then
 	echo "$ip docker-registry" | sudo tee -a /etc/hosts
 fi
@@ -94,15 +107,19 @@ sudo sed -i "/docker-registry/ s/^[^ ]*/$ip/" /etc/hosts
 registry="docker-registry:$port"
 
 # import certificate
+msg2 "Import registry TLS certificate"
 certd="/etc/docker/certs.d/docker-registry:$port"
 sudo mkdir -p "$certd"
 "$kubectl" exec docker-registry -- cat /certs/domain.crt | sudo tee "$certd/ca.crt"
 # }}}
 
 ## 3. build and upload client image {{{
+msg "Provision client image"
 realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
+
+msg2 "Build client image"
 workdir=$(mktemp -d "docker-build-client.XXXXXXXXXX")
 cp -H "$(realpath "$client_tarball")" "$workdir/source.tgz"
 pushd "$workdir" || exit 1
@@ -121,11 +138,13 @@ docker build -t "$image" .
 popd
 rm -rf "$workdir"
 
+msg2 "Push client image to registry"
 docker tag "$image" "$registry/$image"
 docker push "$registry/$image"
 # }}}
 
 ## 4. get user to modify all servers to support registry
+msg "Prepare nodes for workload"
 echo ""
 echo "Okay, here's the deal -- we've set up a private Docker registry, but"
 echo "it uses a cluster-internal DNS name that the node doesn't have access"
