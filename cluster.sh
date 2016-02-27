@@ -38,7 +38,7 @@ metadata:
 spec:
   containers:
    - name: docker-registry
-     image: distribution/registry:2
+     image: library/registry:2
      env:
        - name: REGISTRY_HTTP_TLS_CERTIFICATE
          value: /certs/domain.crt
@@ -100,13 +100,6 @@ sudo mkdir -p "$certd"
 # }}}
 
 ## 3. build and upload client image {{{
-
-# First, send golang 1.6 to private registry
-# This doesn't help because of https://github.com/docker/distribution/issues/1495
-#docker pull "golang:1.6"
-#docker tag "golang:1.6" "$registry/golang:1.6"
-#docker push "$registry/golang:1.6"
-
 realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
@@ -115,24 +108,12 @@ cp -H "$(realpath "$client_tarball")" "$workdir/source.tgz"
 pushd "$workdir" || exit 1
 
 cat > Dockerfile <<EOF
-#FROM $registry/golang:1.6
 FROM golang:1.6
 MAINTAINER Jon Gjengset <jon@thesquareplanet.com>
 
 ADD source.tgz /go
 RUN cd /go/src && env GOPATH=/go go install 6824/gfs/... && cd / && rm -rf /go/src && rm -rf /go/pkg
 EOF
-
-#rapi_port=$("$kubectl" get svc/docker-registry -o=go-template --template="{{index .spec.ports 1 \"nodePort\"}}")
-#rapi="docker-registry:$rapi_port"
-#image="client-image"
-#tar cz -C "$workdir" . | curl \
-#    --data-binary @- \
-#    --header 'Content-Type: application/x-tar' \
-#    --no-buffer \
-#    --capath "$certd" \
-#    --cacert "$certd/ca.crt" \
-#    "https://$rapi/build?t=$image"
 
 image="client-image"
 docker build -t "$image" .
