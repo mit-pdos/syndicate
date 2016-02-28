@@ -52,7 +52,7 @@ func main() {
 	}
 
 	err = master.Call("Master.Register", gfs.RegisterArgs{
-		Me: workerAddress,
+		MyIP: workerAddress,
 	}, &struct{}{})
 
 	if err != nil {

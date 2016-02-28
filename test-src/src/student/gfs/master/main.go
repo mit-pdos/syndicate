@@ -20,8 +20,8 @@ type Master struct {
 
 func (m *Master) Register(args *gfs.RegisterArgs, reply *struct{}) error {
 	m.mu.Lock()
-	m.chunkservers = append(m.chunkservers, args.Me)
-	fmt.Println("new chunkserver:", args.Me)
+	m.chunkservers = append(m.chunkservers, args.MyIP)
+	fmt.Println("new chunkserver:", args.MyIP)
 	m.mu.Unlock()
 	return nil
 }
